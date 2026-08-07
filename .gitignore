@@ -1,0 +1,18 @@
+# Зависимости
+node_modules/
+
+# Переменные окружения — DATABASE_URL и прочие секреты
+.env
+.env.local
+.env.*.local
+
+# Логи
+*.log
+npm-debug.log*
+
+# Сборка фронта
+ui/dist/
+
+# Служебное
+.DS_Store
+Thumbs.db

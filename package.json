@@ -1,0 +1,21 @@
+{
+  "name": "calendar-booking-server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:init": "psql \"$DATABASE_URL\" -f server/schema.sql"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "pg": "^8.13.1"
+  },
+  "devDependencies": {
+    "supertest": "^7.1.4",
+    "vitest": "^3.2.4"
+  }
+}
