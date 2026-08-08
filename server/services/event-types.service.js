@@ -2,14 +2,27 @@ import { eventTypeNotFound } from '../errors.js';
 import { toEventTypeDto } from '../mappers/event-type.mapper.js';
 
 /**
+ * Публичный список типов событий меняется редко, а фронт запрашивает его на каждой странице
+ * бронирования. Короткий кэш снимает повторные обращения к базе, не заметно устаревая.
+ */
+const LIST_CACHE_TTL_MS = 30_000;
+let listCache = null;
+
+/**
  * Слой правил предметной области. Для типов событий правило пока одно — публично видно
  * только `hidden: false`, — но слой существует с первого эндпоинта, чтобы следующим правилам
  * (пересечение интервалов, переходы статусов) было куда лечь без переноса кода между слоями.
  */
 export const createEventTypesService = (eventTypesRepository) => ({
   async listPublic() {
+    if (listCache && Date.now() - listCache.storedAt < LIST_CACHE_TTL_MS) {
+      return listCache.value;
+    }
+
     const rows = await eventTypesRepository.findAllPublic();
-    return rows.map(toEventTypeDto);
+    const value = rows.map(toEventTypeDto);
+    listCache = { storedAt: Date.now(), value };
+    return value;
   },
 
   async getPublicBySlug(slug) {

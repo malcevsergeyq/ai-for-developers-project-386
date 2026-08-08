@@ -36,4 +36,13 @@ describe('toEventTypeDto', () => {
     expect(dto.description).toBeNull();
     expect(dto.location).toBeNull();
   });
+
+  it('не возвращает один и тот же объект для разных строк', () => {
+    const first = toEventTypeDto(dbRow({ id: 1, slug: 'demo-call' }));
+    const second = toEventTypeDto(dbRow({ id: 2, slug: 'intro' }));
+
+    expect(first).not.toBe(second);
+    expect(first.slug).toBe('demo-call');
+    expect(second.slug).toBe('intro');
+  });
 });
