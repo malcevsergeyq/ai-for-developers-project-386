@@ -5,6 +5,7 @@ Design First: этот файл — источник истины для фро�
 ## Конвенции
 
 - JSON; ошибки `{ error: "machine_code", message: "русское описание" }`
+- Нераспознанный JSON в теле запроса → `400 invalid_json` (общий ответ для всех эндпоинтов с телом)
 - Даты `YYYY-MM-DD`, время `HH:MM` — строки, в таймзоне `AvailabilitySchedule.timezone` (IANA, напр. `Europe/Moscow`); клиент не передаёт offset
 - `durationMinutes` — число; слот — интервал `[startTime, startTime+durationMinutes)`
 - Два контура: публичный (запись клиентов, без авторизации) и админский (`/admin/*`, авторизация вне скоупа контракта)
@@ -54,16 +55,31 @@ Design First: этот файл — источник истины для фро�
 
 ### Админ (владелец)
 
-| Метод | Путь |
-|---|---|
-| GET / POST | `/api/admin/event-types` |
-| GET / PATCH / DELETE | `/api/admin/event-types/:id` |
-| GET / POST | `/api/admin/availability-schedules` |
-| GET / PATCH / DELETE | `/api/admin/availability-schedules/:id` |
-| GET | `/api/admin/bookings` |
-| GET | `/api/admin/bookings/:id` |
-| PATCH | `/api/admin/bookings/:id/status` |
-| POST | `/api/admin/bookings/:id/cancel` |
+| Метод | Путь | Тело / Ответы |
+|---|---|---|
+| GET / POST | `/api/admin/event-types` | |
+| GET / PATCH / DELETE | `/api/admin/event-types/:id` | |
+| GET | `/api/admin/availability-schedules` | — → `200` (массив AvailabilitySchedule, по возрастанию `id`; пустой список — `[]`) |
+| POST | `/api/admin/availability-schedules` | `{ name, timezone, rules }` → `201` (AvailabilitySchedule) \| `400 validation_error` |
+| GET | `/api/admin/availability-schedules/:id` | — → `200` (AvailabilitySchedule) \| `404 availability_schedule_not_found` |
+| PATCH | `/api/admin/availability-schedules/:id` | `{ name?, timezone?, rules? }` → `200` (AvailabilitySchedule) \| `400 validation_error` \| `404 availability_schedule_not_found` |
+| DELETE | `/api/admin/availability-schedules/:id` | — → `204` (без тела) \| `404 availability_schedule_not_found` \| `409 availability_schedule_in_use` |
+| GET | `/api/admin/bookings` | |
+| GET | `/api/admin/bookings/:id` | |
+| PATCH | `/api/admin/bookings/:id/status` | |
+| POST | `/api/admin/bookings/:id/cancel` | |
+
+#### Расписания доступности — тела и валидация
+
+- **POST** — `name`, `timezone`, `rules` обязательны все три. `PATCH` — частичный: любое подмножество тех же полей, но не пустое тело (`400`).
+- Неизвестное поле в теле → `400 validation_error` (защита от опечатки в имени поля, которая иначе тихо не применится).
+- `name` — непустая строка, сохраняется без окружающих пробелов.
+- `timezone` — IANA-имя зоны (`Europe/Moscow`, `UTC`), которое понимает `Intl`. Числовой offset (`+03:00`) — не значение таймзоны.
+- `rules` — массив; **пустой массив допустим** и означает расписание без окон доступности (слотов не будет). В `PATCH` переданный `rules` заменяет весь набор правил целиком, а не дополняет его.
+- Правило: `weekday` — целое `1..7`, `startTime`/`endTime` — `HH:MM` в диапазоне `00:00..23:59`, `startTime < endTime`.
+- Два правила одного `weekday` не должны пересекаться по времени (`400`) — иначе генерация слотов выдала бы дубли. Стык впритык (`09:00–13:00` и `13:00–18:00`) пересечением не считается.
+- В ответе правила отсортированы по `weekday`, затем по `startTime`; собственного `id` у правила в DTO нет — набор правил адресуется только через расписание.
+- `id` в пути, не являющийся целым положительным числом, → `404 availability_schedule_not_found` (несуществующая запись, а не ошибка запроса).
 
 ## Ключевые правила
 
@@ -77,4 +93,4 @@ Design First: этот файл — источник истины для фро�
 8. `token` не отдаётся в админских ответах о брони.
 9. `completed` — выставляется вручную админом (без шедулера).
 10. `pending → confirmed` — вручную владельцем через `PATCH /admin/bookings/:id/status`.
-11. `DELETE /admin/event-types/:id` и `DELETE /admin/availability-schedules/:id` — запрещены (`409`), пока есть связанные записи (брони на типе события; типы событий на расписании). Для «убрать из публичного доступа» — `PATCH hidden: true`, не `DELETE`.
+11. `DELETE /admin/event-types/:id` и `DELETE /admin/availability-schedules/:id` — запрещены (`409`), пока есть связанные записи (брони на типе события; типы событий на расписании). Коды: `event_type_in_use` и `availability_schedule_in_use`. Для «убрать из публичного доступа» — `PATCH hidden: true`, не `DELETE`.

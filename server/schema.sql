@@ -13,6 +13,10 @@ CREATE TABLE schedule_rules (
   CHECK (start_time < end_time)
 );
 
+-- FK-колонка сама по себе не индексируется: по ней идут и выборка правил расписания,
+-- и каскадное удаление при DELETE расписания.
+CREATE INDEX schedule_rules_schedule_id_idx ON schedule_rules (availability_schedule_id);
+
 CREATE TABLE event_types (
   id serial PRIMARY KEY,
   title text NOT NULL,

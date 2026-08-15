@@ -7,6 +7,8 @@
     "start": "node server/index.js",
     "test": "vitest run",
     "test:watch": "vitest",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "db:init": "psql \"$DATABASE_URL\" -f server/schema.sql"
   },
   "dependencies": {
@@ -15,6 +17,9 @@
     "pg": "^8.13.1"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.8.1",
+    "globals": "^17.9.0",
     "supertest": "^7.1.4",
     "vitest": "^3.2.4"
   }
