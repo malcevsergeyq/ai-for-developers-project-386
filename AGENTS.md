@@ -26,9 +26,7 @@
 
 ## Структура
 
-- `server/` — Express-приложение, `schema.sql` (модель данных). Раскладка: `routes/` (HTTP) → `services/` (правила) → `repositories/` (SQL), плюс `mappers/` (snake_case ↔ camelCase) и `errors.js`. `createApp` принимает репозитории аргументом — поэтому тесты идут без Postgres
-- `.claude/skills/` — скиллы проекта, поднимаются сами по своему `description`: `new-endpoint` (процедура добавления и правки эндпоинта), `db-layer` (устройство слоя данных)
-- `ui/` — Vue SPA (публичная запись + админка)
+- `server/` — Express-приложение, `schema.sql` (модель данных). Раскладка: `routes/` (HTTP) → `services/` (правила) → `repositories/` (SQL), плюс `mappers/` (snake_case ↔ camelCase) и `errors.js`. `createApp` принимает репозитории аргументом — поэтому тесты идут без Postgres- `ui/` — Vue SPA (публичная запись + админка)
 - `API-CONTRACT.md` — DTO, эндпоинты, ключевые правила
 - `PLAN.md` — статус этапов, принятые решения
 
