@@ -46,3 +46,12 @@ CREATE TABLE bookings (
 CREATE UNIQUE INDEX bookings_active_slot_uniq
   ON bookings (event_type_id, date, start_time)
   WHERE status IN ('pending','confirmed');
+
+-- Один email — одна активная бронь на дату, по всем типам событий сразу (правило 12 контракта).
+-- Индекс по выражению `lower(email)`: сравнение email регистронезависимо, при этом введённое
+-- клиентом написание сохраняется в колонке как есть. `event_type_id` в ключ не входит намеренно —
+-- ограничение сквозное по типам событий.
+-- Ограничение держит база, а не код: проверка `SELECT` перед `INSERT` оставляет окно для гонки.
+CREATE UNIQUE INDEX bookings_active_email_day_uniq
+  ON bookings (lower(email), date)
+  WHERE status IN ('pending','confirmed');

@@ -27,6 +27,20 @@ export const availabilityScheduleInUse = () =>
     'Расписание используется типами событий и не может быть удалено',
   );
 
+/**
+ * Правило 12 контракта: один email — одна активная бронь на дату, по всем типам событий.
+ * Источник отказа — партиальный уникальный индекс `bookings_active_email_day_uniq`.
+ * Он даёт тот же `23505`, что и `bookings_active_slot_uniq` (`slot_taken`), поэтому
+ * при вставке брони две ошибки различаются по имени ограничения (`err.constraint`),
+ * а не по коду SQLSTATE.
+ */
+export const emailAlreadyBooked = () =>
+  new HttpError(
+    409,
+    'email_already_booked',
+    'На этот email уже есть активная бронь на выбранный день',
+  );
+
 export const validationError = (message) => new HttpError(400, 'validation_error', message);
 
 export const invalidJson = () =>

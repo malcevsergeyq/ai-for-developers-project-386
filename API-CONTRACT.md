@@ -49,7 +49,7 @@ Design First: этот файл — источник истины для фро�
 | GET | `/api/public/event-types` | — → `200` (массив EventType, только `hidden:false`; пустой список — `[]`) |
 | GET | `/api/public/event-types/:slug` | — → `200` (EventType) \| `404 event_type_not_found` (несуществующий slug ИЛИ `hidden:true` — один и тот же ответ) |
 | GET | `/api/public/event-types/:slug/slots` | `?date=YYYY-MM-DD` |
-| POST | `/api/public/event-types/:slug/bookings` | `{ date, startTime, name, email, phone?, note? }` → `201` (booking + `token`) \| `400` \| `404` \| `409 slot_taken` |
+| POST | `/api/public/event-types/:slug/bookings` | `{ date, startTime, name, email, phone?, note? }` → `201` (booking + `token`) \| `400` \| `404` \| `409 slot_taken` \| `409 email_already_booked` |
 | GET | `/api/public/bookings/:id` | `?token=...` → `200` (booking) \| `404 booking_not_found` (несуществующий id ИЛИ неверный token — один и тот же ответ) |
 | POST | `/api/public/bookings/:id/cancel` | `{ token }` → `200` \| `404 booking_not_found` (та же логика) |
 
@@ -94,3 +94,4 @@ Design First: этот файл — источник истины для фро�
 9. `completed` — выставляется вручную админом (без шедулера).
 10. `pending → confirmed` — вручную владельцем через `PATCH /admin/bookings/:id/status`.
 11. `DELETE /admin/event-types/:id` и `DELETE /admin/availability-schedules/:id` — запрещены (`409`), пока есть связанные записи (брони на типе события; типы событий на расписании). Коды: `event_type_in_use` и `availability_schedule_in_use`. Для «убрать из публичного доступа» — `PATCH hidden: true`, не `DELETE`.
+12. Один email — не больше одной активной брони (`pending`/`confirmed`) на календарную дату, **по всем типам событий сразу**: клиент не может в один день записаться и на демо-звонок, и на консультацию. Повторная попытка → `409 email_already_booked`. Email сравнивается без учёта регистра (`Ivan@mail.ru` и `ivan@mail.ru` — один клиент). Отменённая бронь ограничение не занимает: после `cancel` клиент может записаться на этот день заново. Держится партиальным уникальным индексом `bookings_active_email_day_uniq`, не проверкой в коде, — `SELECT` перед `INSERT` оставляет окно для гонки (то же соображение, что и в правиле 1).
