@@ -8,13 +8,15 @@
 
 - `npm install` — зависимости (Express 5, pg, cors; Vitest и supertest — dev)
 - `npm start` — сервер на `PORT` (по умолчанию 3000). Без `DATABASE_URL` поднимается на хранилище в памяти и засевает два демо-типа встреч
-- `npm test` — тесты (Vitest); БД не требуется, репозитории подменяются заглушкой
+- `npm test` — юнит-тесты бэка (Vitest + supertest). Идут на настоящем in-memory-репозитории, а не на заглушке: проверяется та же логика занятости, что и в проде без `DATABASE_URL`. `vitest.config.js` ограничивает набор `server/**`, иначе Vitest подхватит и e2e-спеки
 - `npm run lint` — ESLint (flat config, `eslint.config.js`); должен быть зелёным перед словом «готово»
 - `npm run db:init` — накатить `server/schema.sql` через `psql "$DATABASE_URL"`
 - `npm run spec:build` — перегенерировать `spec/openapi.yaml` из `spec/main.tsp`
 - `npm run mock` — Prism поднимает мок бэкенда по контракту на `127.0.0.1:4010` (для разработки фронта без сервера)
 - `cd ui && npm run dev` — фронт на `127.0.0.1:5173`; `npm run build` — сборка с проверкой типов; `npm run lint` — oxlint
 - `npm run test:e2e` — Playwright: сценарии из `e2e/SCENARIOS.md` в реальном браузере. Серверы поднимает сам, запускать `npm start` заранее не нужно
+
+**Проверять код возврата, а не хвост вывода.** `npm test 2>&1 | tail -N` возвращает код `tail`, то есть всегда ноль: упавшая сборка проходит через `&&` незамеченной, а ошибки остаются выше среза. Так 19.08 в CI уехал сломанный `vitest.config`. Писать вывод в файл и смотреть `echo $?`.
 
 **Базы данных сейчас нет.** Postgres не установлен, `psql` недоступен, `DATABASE_URL` не задан — `npm run db:init` выполнить нельзя, а `npm start` работает на памяти. `repositories/postgres.js` и `schema.sql` **ни разу не исполнялись против живой базы**: тесты идут на in-memory-хранилище и корректность SQL не подтверждают.
 
