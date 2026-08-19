@@ -217,6 +217,8 @@ components:
           type: string
         eventTypeTitle:
           type: string
+          minLength: 1
+          maxLength: 100
           description: Название типа события на момент чтения — чтобы список владельца не требовал второго запроса.
         start:
           type: string
@@ -226,8 +228,11 @@ components:
           format: date-time
         guestName:
           type: string
+          minLength: 1
+          maxLength: 100
         guestEmail:
           type: string
+          format: email
         notes:
           type: string
           description: Необязательный комментарий гостя.
@@ -273,13 +278,18 @@ components:
           description: Непрозрачный идентификатор (UUID).
         title:
           type: string
+          minLength: 1
+          maxLength: 100
           description: Название, которое видит гость в списке видов брони.
         description:
           type: string
+          maxLength: 1000
           description: Описание встречи для страницы бронирования.
         durationMinutes:
           type: integer
           format: int32
+          minimum: 30
+          maximum: 240
           description: Длительность встречи в минутах; кратна 30.
       description: Тип встречи, который публикует владелец календаря.
     EventTypeCreate:

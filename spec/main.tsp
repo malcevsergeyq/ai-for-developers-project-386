@@ -36,12 +36,17 @@ model EventType {
   id: string;
 
   /** Название, которое видит гость в списке видов брони. */
+  @minLength(1)
+  @maxLength(100)
   title: string;
 
   /** Описание встречи для страницы бронирования. */
+  @maxLength(1000)
   description: string;
 
   /** Длительность встречи в минутах; кратна 30. */
+  @minValue(30)
+  @maxValue(240)
   durationMinutes: int32;
 }
 
@@ -80,14 +85,19 @@ model Booking {
   eventTypeId: string;
 
   /** Название типа события на момент чтения — чтобы список владельца не требовал второго запроса. */
+  @minLength(1)
+  @maxLength(100)
   eventTypeTitle: string;
 
   start: utcDateTime;
 
   end: utcDateTime;
 
+  @minLength(1)
+  @maxLength(100)
   guestName: string;
 
+  @format("email")
   guestEmail: string;
 
   /** Необязательный комментарий гостя. */
