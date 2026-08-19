@@ -1,52 +1,77 @@
-import express from 'express';
-import cors from 'cors';
+import cors from 'cors'
+import express from 'express'
 
-import { HttpError, invalidJson } from './errors.js';
-import { createEventTypesService } from './services/event-types.service.js';
-import { createAvailabilitySchedulesService } from './services/availability-schedules.service.js';
-import { createPublicEventTypesRouter } from './routes/public/event-types.routes.js';
-import { createAdminAvailabilitySchedulesRouter } from './routes/admin/availability-schedules.routes.js';
+import { HttpError, routeNotFound, validationFailed } from './errors.js'
+import { createAdminRouter } from './routes/admin.routes.js'
+import { createPublicRouter } from './routes/public.routes.js'
+import { createBookingsService } from './services/bookings.service.js'
+import { createEventTypesService } from './services/event-types.service.js'
+
+/** Заметка гостя ограничена 1000 символами — килобайты сверх этого можно отвергать сразу. */
+const BODY_LIMIT = '32kb'
 
 /**
- * Репозитории приходят снаружи — это позволяет тестам работать без поднятого Postgres
- * и не превращает `createApp` в точку, знающую про драйвер БД.
+ * Список origin из окружения: `CORS_ORIGIN=https://app.example.com,https://staging.example.com`.
+ * Без переменной разрешаем всех — это дев-режим и осознанный дефолт, а не забытая настройка.
  *
- * CORS нужен явно: фронт и бэк живут на разных origin (раздельный деплой),
- * без него рабочий эндпоинт просто не доедет до SPA.
+ * Честная оговорка: CORS здесь не граница безопасности. `/admin/*` вообще не требует
+ * авторизации (ТЗ вынесло её за скоуп), поэтому кто угодно дойдёт до него запросом
+ * из curl, где CORS не действует. Настоящее лекарство — авторизация, а не список origin.
  */
-export const createApp = ({ eventTypesRepository, availabilitySchedulesRepository }) => {
-  const app = express();
+const corsOptions = () => {
+  const configured = process.env.CORS_ORIGIN
+  if (!configured) return {}
+  return { origin: configured.split(',').map((origin) => origin.trim()) }
+}
 
-  app.use(cors());
-  app.use(express.json());
+/**
+ * Репозитории приходят снаружи — благодаря этому одно и то же приложение работает
+ * и на Postgres, и на хранилище в памяти, а тесты обходятся без поднятой базы.
+ */
+export const createApp = ({ repositories, now = () => new Date() }) => {
+  const app = express()
 
-  const eventTypesService = createEventTypesService(eventTypesRepository);
-  app.use('/api/public/event-types', createPublicEventTypesRouter(eventTypesService));
+  app.use(cors(corsOptions()))
+  app.use(express.json({ limit: BODY_LIMIT }))
 
-  const availabilitySchedulesService =
-    createAvailabilitySchedulesService(availabilitySchedulesRepository);
-  app.use(
-    '/api/admin/availability-schedules',
-    createAdminAvailabilitySchedulesRouter(availabilitySchedulesService),
-  );
+  const eventTypesService = createEventTypesService(repositories)
+  const bookingsService = createBookingsService(repositories)
+  const deps = { eventTypesService, bookingsService, now }
 
-  // Обработчик ошибок один на всё приложение: тело и статус физически не могут разойтись
-  // между обработчиками, а наружу не утекает текст ошибки БД.
-  // eslint-disable-next-line no-unused-vars
-  app.use((err, req, res, next) => {
+  app.use('/', createPublicRouter(deps))
+  app.use('/admin', createAdminRouter(deps))
+
+  // Без этого Express отдал бы на неизвестный путь свою HTML-страницу, и клиент,
+  // который всегда ждёт `{ error, message }`, споткнулся бы на разборе ответа.
+  app.use((req, res, next) => next(routeNotFound()))
+
+  // Обработчик ошибок один на всё приложение: статус и тело физически не могут
+  // разойтись между обработчиками, а текст ошибки БД наружу не утекает.
+  app.use((err, req, res, _next) => {
     if (err instanceof HttpError) {
-      return res.status(err.status).json({ error: err.error, message: err.message });
+      return res.status(err.status).json({ error: err.error, message: err.message })
     }
-    // Битый JSON express.json() бросает раньше любого обработчика — без этой ветки
-    // клиент получил бы 500 на свою же ошибку в теле запроса.
-    if (err?.type === 'entity.parse.failed') {
-      const parseError = invalidJson();
-      return res
-        .status(parseError.status)
-        .json({ error: parseError.error, message: parseError.message });
-    }
-    return res.status(500).json({ error: 'internal_error', message: 'Внутренняя ошибка сервера' });
-  });
 
-  return app;
-};
+    // Ошибки разбора тела express.json() бросает раньше любого обработчика.
+    // Все три — вина запроса, и без явных веток каждая превращалась бы в 500.
+    if (err?.type === 'entity.parse.failed') {
+      const parseError = validationFailed('Тело запроса не является корректным JSON')
+      return res.status(parseError.status).json({ error: parseError.error, message: parseError.message })
+    }
+    if (err?.type === 'entity.too.large') {
+      return res
+        .status(413)
+        .json({ error: 'payload_too_large', message: `Тело запроса больше ${BODY_LIMIT}` })
+    }
+    if (err?.type === 'encoding.unsupported') {
+      return res
+        .status(415)
+        .json({ error: 'unsupported_media_type', message: 'Неподдерживаемая кодировка тела запроса' })
+    }
+
+    console.error('Необработанная ошибка:', err)
+    return res.status(500).json({ error: 'internal_error', message: 'Внутренняя ошибка сервера' })
+  })
+
+  return app
+}

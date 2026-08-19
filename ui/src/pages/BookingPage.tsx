@@ -190,6 +190,15 @@ export default function BookingPage() {
         <aside className="rounded-lg border p-5">
           <h2 className="text-sm font-medium">Ваши данные</h2>
 
+          {formError && (
+            <p
+              role="alert"
+              className="mt-3 rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-sm text-destructive"
+            >
+              {formError}
+            </p>
+          )}
+
           {!selectedSlot && (
             <p className="mt-3 text-sm text-muted-foreground">
               Выберите свободное время слева — здесь появится форма записи.
@@ -234,12 +243,6 @@ export default function BookingPage() {
                   rows={3}
                 />
               </div>
-
-              {formError && (
-                <p role="alert" className="text-sm text-destructive">
-                  {formError}
-                </p>
-              )}
 
               <Button type="submit" className="w-full" disabled={submitting}>
                 {submitting ? 'Записываем…' : 'Записаться'}
