@@ -7,10 +7,15 @@ export type Booking = components['schemas']['Booking']
 export type BookingCreate = components['schemas']['BookingCreate']
 
 /**
- * Адрес бэкенда. На время разработки фронта — мок Prism по контракту
- * (`npm run mock` в корне проекта), в проде подставляется при сборке.
+ * Адрес бэкенда. Пустая строка по умолчанию — это «тот же origin»: в контейнере
+ * фронт и API отдаёт один процесс, и запросы уходят относительными путями.
+ *
+ * Дефолт именно такой, а не адрес дев-сервера: `.env.development` при `npm run build`
+ * не читается (сборка идёт в production-режиме), поэтому любой забытый `VITE_API_URL`
+ * молча увёл бы прод в чужой адрес. Промах в сторону своего origin виден сразу,
+ * промах в сторону чужого — только в проде.
  */
-const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:4010'
+const BASE_URL = import.meta.env.VITE_API_URL ?? ''
 
 /** Ошибка, пришедшая от API в формате контракта `{ error, message }`. */
 export class ApiError extends Error {

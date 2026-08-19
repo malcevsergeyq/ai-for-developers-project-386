@@ -1,3 +1,5 @@
+import path from 'node:path'
+
 import cors from 'cors'
 import express from 'express'
 
@@ -28,7 +30,7 @@ const corsOptions = () => {
  * Репозитории приходят снаружи — благодаря этому одно и то же приложение работает
  * и на Postgres, и на хранилище в памяти, а тесты обходятся без поднятой базы.
  */
-export const createApp = ({ repositories, now = () => new Date() }) => {
+export const createApp = ({ repositories, now = () => new Date(), staticDir = null }) => {
   const app = express()
 
   app.use(cors(corsOptions()))
@@ -40,6 +42,26 @@ export const createApp = ({ repositories, now = () => new Date() }) => {
 
   app.use('/', createPublicRouter(deps))
   app.use('/admin', createAdminRouter(deps))
+
+  /**
+   * В контейнере фронт и API отдаются с одного origin: образ один, процесс один,
+   * и `VITE_API_URL` при сборке пустой — запросы идут относительными путями.
+   * Раздельность фронта и бэка от этого не страдает: они по-прежнему собираются
+   * независимо и общаются только через контракт — общий у них лишь домен.
+   *
+   * В деве `staticDir` не передаётся, фронт живёт на своём dev-сервере.
+   */
+  if (staticDir) {
+    app.use(express.static(staticDir, { index: false }))
+
+    // SPA-фолбэк: маршруты вроде /book/:id и /admin существуют только в браузере,
+    // на сервере их нет. Отдаём index.html, но лишь тем, кто просит HTML, —
+    // иначе неизвестный путь API вернул бы страницу вместо `{ error, message }`.
+    app.get(/.*/, (req, res, next) => {
+      if (!req.accepts('html')) return next()
+      res.sendFile(path.join(staticDir, 'index.html'))
+    })
+  }
 
   // Без этого Express отдал бы на неизвестный путь свою HTML-страницу, и клиент,
   // который всегда ждёт `{ error, message }`, споткнулся бы на разборе ответа.

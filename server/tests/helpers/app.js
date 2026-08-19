@@ -9,13 +9,17 @@ export const NOW = new Date('2026-09-07T07:00:00Z')
  * Хранилище то же самое, что и в проде без `DATABASE_URL`, — не заглушка,
  * поэтому тесты проверяют настоящую логику занятости, а не её имитацию.
  */
-export const buildApp = async ({ eventTypes = [], now = NOW } = {}) => {
+export const buildApp = async ({ eventTypes = [], now = NOW, staticDir = null } = {}) => {
   const repositories = createMemoryRepositories()
   const created = []
   for (const eventType of eventTypes) {
     created.push(await repositories.eventTypes.create(eventType))
   }
-  return { app: createApp({ repositories, now: () => now }), repositories, eventTypes: created }
+  return {
+    app: createApp({ repositories, now: () => now, staticDir }),
+    repositories,
+    eventTypes: created,
+  }
 }
 
 export const demoCall = { title: 'Демо-звонок', description: 'Знакомство', durationMinutes: 30 }

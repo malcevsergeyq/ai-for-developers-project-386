@@ -1,0 +1,31 @@
+# Зависимости и артефакты ставятся/собираются внутри образа
+node_modules
+ui/node_modules
+ui/dist
+
+# Всё, что нужно только на машине разработчика и в CI
+.git
+.github
+.claude
+.agents
+e2e
+playwright.config.ts
+playwright-report
+test-results
+blob-report
+.playwright-mcp
+server/tests
+vitest.config.js
+eslint.config.js
+
+# Контракт нужен людям и CI, но не рантайму
+spec
+
+# Документация
+*.md
+!README.md
+
+# Локальное окружение
+.env
+.env.*
+*.log

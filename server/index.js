@@ -1,3 +1,6 @@
+import { existsSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
+
 import { createApp } from './app.js'
 import { createPool } from './db.js'
 import { createMemoryRepositories } from './repositories/memory.js'
@@ -46,7 +49,16 @@ console.log(
 
 await seedIfEmpty(repositories)
 
-const app = createApp({ repositories })
+/**
+ * Собранный фронт лежит рядом только в образе — в дев-режиме его нет, и тогда
+ * сервер остаётся чистым API, а фронт живёт на своём dev-сервере.
+ */
+const distDir = fileURLToPath(new URL('../ui/dist', import.meta.url))
+const staticDir = existsSync(distDir) ? distDir : null
+
+console.log(staticDir ? `Отдаём собранный фронт из ${staticDir}` : 'Фронт не собран — только API')
+
+const app = createApp({ repositories, staticDir })
 const port = process.env.PORT ?? 3000
 
 app.listen(port, () => {
