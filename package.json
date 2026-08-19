@@ -11,7 +11,9 @@
     "lint:fix": "eslint . --fix",
     "db:init": "psql \"$DATABASE_URL\" -f server/schema.sql",
     "spec:build": "tsp compile spec",
-    "mock": "prism mock spec/openapi.yaml --port 4010 --dynamic"
+    "mock": "prism mock spec/openapi.yaml --port 4010 --dynamic",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
     "cors": "^2.8.5",
@@ -20,6 +22,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.62.1",
     "@stoplight/prism-cli": "^5.14.2",
     "@typespec/compiler": "^1.15.0",
     "@typespec/http": "^1.15.0",

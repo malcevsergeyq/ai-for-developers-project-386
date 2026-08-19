@@ -16,3 +16,9 @@ ui/dist/
 # Служебное
 .DS_Store
 Thumbs.db
+
+# Артефакты Playwright
+playwright-report/
+test-results/
+blob-report/
+.playwright-mcp/

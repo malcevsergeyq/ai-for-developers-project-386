@@ -1,0 +1,22 @@
+name: release-please
+
+on:
+  push:
+    branches: [main]
+
+# release-please сам открывает и обновляет PR с changelog, поэтому ему нужны права
+# на запись в репозиторий и на работу с pull request'ами.
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      # Читает историю коммитов по Conventional Commits и держит открытым один
+      # release-PR: feat: → minor, fix: → patch, ! или BREAKING CHANGE → major.
+      # Мёрдж этого PR и есть выпуск релиза — версия и changelog пишутся без ручного труда.
+      - uses: googleapis/release-please-action@v4
+        with:
+          release-type: node

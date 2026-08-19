@@ -1,0 +1,65 @@
+name: ci
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            ui/package-lock.json
+
+      - name: Установить зависимости бэка
+        run: npm ci
+
+      - name: Установить зависимости фронта
+        run: npm ci
+        working-directory: ui
+
+      # Контракт — источник истины: если spec/main.tsp перестал компилироваться
+      # или openapi.yaml забыли перегенерировать, дальше идти незачем.
+      - name: Проверить контракт
+        run: |
+          npm run spec:build
+          git diff --exit-code spec/openapi.yaml \
+            || (echo "::error::spec/openapi.yaml не совпадает с main.tsp — выполните npm run spec:build" && exit 1)
+
+      - name: Линтер бэка
+        run: npm run lint
+
+      - name: Линтер фронта
+        run: npm run lint
+        working-directory: ui
+
+      - name: Юнит-тесты бэка
+        run: npm test
+
+      - name: Сборка фронта с проверкой типов
+        run: npm run build
+        working-directory: ui
+
+      - name: Установить браузер для e2e
+        run: npx playwright install --with-deps chromium
+
+      # Playwright сам поднимает бэкенд и превью собранного фронта — отдельных шагов
+      # с запуском серверов не нужно, конфигурация одна и для CI, и для машины разработчика.
+      - name: e2e-сценарии
+        run: npm run test:e2e
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
