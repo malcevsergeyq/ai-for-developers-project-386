@@ -4,7 +4,10 @@
 Владелец календаря публикует типы встреч, гость выбирает свободный слот и записывается
 без регистрации. Финальный проект модуля 1 курса Hexlet «ИИ для разработчиков».
 
-**Приложение опубликовано:** _ссылка появится после деплоя_
+**Приложение опубликовано:** https://calendar-booking-y3dz.onrender.com
+
+> Free-план Render усыпляет сервис после 15 минут без запросов — первый запрос
+> после сна ждёт около минуты, пока поднимется контейнер.
 
 ### Hexlet tests and linter status:
 [![Actions Status](https://github.com/malcevsergeyq/ai-for-developers-project-386/actions/workflows/hexlet-check.yml/badge.svg)](https://github.com/malcevsergeyq/ai-for-developers-project-386/actions)
@@ -69,7 +72,8 @@ cd ui && npm install && npm run dev   # фронт на :5173
 | `npm run mock` | мок бэкенда по контракту (Prism) на `:4010` |
 
 Прогнать те же сценарии против уже работающего приложения — контейнера или задеплоенного
-сервиса: `E2E_BASE_URL=http://127.0.0.1:8080 npm run test:e2e`. Серверы при этом не поднимаются.
+сервиса: `E2E_BASE_URL=https://calendar-booking-y3dz.onrender.com npm run test:e2e`.
+Серверы при этом не поднимаются.
 
 Что проверяют e2e-сценарии и почему именно они — в [`e2e/SCENARIOS.md`](./e2e/SCENARIOS.md).
 Соглашения проекта для людей и агентов — в [`AGENTS.md`](./AGENTS.md).
