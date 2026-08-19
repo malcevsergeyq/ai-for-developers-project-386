@@ -1,6 +1,6 @@
 import { defineConfig, devices } from '@playwright/test'
 
-import { API_PORT, API_URL, WEB_PORT, WEB_URL } from './e2e/config'
+import { API_PORT, API_URL, IS_EXTERNAL, WEB_PORT, WEB_URL } from './e2e/config'
 
 /**
  * e2e-проверки идут против собранного фронта и настоящего бэкенда — так же, как будет
@@ -39,7 +39,8 @@ export default defineConfig({
 
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
 
-  webServer: [
+  // При E2E_BASE_URL приложение уже работает — поднимать нечего.
+  webServer: IS_EXTERNAL ? undefined : [
     {
       // Без DATABASE_URL бэкенд поднимается на хранилище в памяти и засевает демо-данные —
       // ровно тот режим, в котором приложение попадёт на проверку.

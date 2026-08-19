@@ -68,5 +68,8 @@ cd ui && npm install && npm run dev   # фронт на :5173
 | `npm run spec:build` | перегенерировать `spec/openapi.yaml` из `spec/main.tsp` |
 | `npm run mock` | мок бэкенда по контракту (Prism) на `:4010` |
 
+Прогнать те же сценарии против уже работающего приложения — контейнера или задеплоенного
+сервиса: `E2E_BASE_URL=http://127.0.0.1:8080 npm run test:e2e`. Серверы при этом не поднимаются.
+
 Что проверяют e2e-сценарии и почему именно они — в [`e2e/SCENARIOS.md`](./e2e/SCENARIOS.md).
 Соглашения проекта для людей и агентов — в [`AGENTS.md`](./AGENTS.md).
