@@ -9,7 +9,8 @@
     "test:watch": "vitest",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "db:init": "psql \"$DATABASE_URL\" -f server/schema.sql"
+    "db:init": "psql \"$DATABASE_URL\" -f server/schema.sql",
+    "spec:build": "tsp compile spec"
   },
   "dependencies": {
     "cors": "^2.8.5",
@@ -18,6 +19,9 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@typespec/compiler": "^1.15.0",
+    "@typespec/http": "^1.15.0",
+    "@typespec/openapi3": "^1.15.0",
     "eslint": "^10.8.1",
     "globals": "^17.9.0",
     "supertest": "^7.1.4",
